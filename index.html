@@ -16,7 +16,7 @@
   --fg:#16201f; --muted:#5d6b69; --line:#cdd6d5;
   --sea:#0d5e63; --sea-soft:#d3e6e6; --tangerine:#c8550f; --tangerine-soft:#fae3d4;
   --warn:#8a4b00; --ok:#1f6b45;
-  --land:#e4eae1; --water:#d4e6ea; --climb:#c2361f; --day1:#0d5e63; --day2:#c8550f; --mart:#2f7a3e; --cafe:#7a4fa3;
+  --land:#e4eae1; --water:#d4e6ea; --climb:#c2361f; --day1:#0d5e63; --day2:#c8550f; --mart:#f2c230;--food:#e0730d; --cafe:#2563d6;
   --display:"Hahmlet",ui-serif,Georgia,serif;
   --body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
 }
@@ -25,14 +25,14 @@
   --fg:#e6ecea; --muted:#94a4a1; --line:#2c3938;
   --sea:#5fc5c9; --sea-soft:#13302f; --tangerine:#f0905a; --tangerine-soft:#35200f;
   --warn:#e0a861; --ok:#62c795;
-  --land:#1d2826; --water:#0d1a1d; --climb:#ff6b52; --day1:#5fc5c9; --day2:#f0905a; --mart:#6fcf86; --cafe:#c39be6; color-scheme:dark;
+  --land:#1d2826; --water:#0d1a1d; --climb:#ff6b52; --day1:#5fc5c9; --day2:#f0905a; --mart:#f5cf4a;--food:#f59a3c; --cafe:#6ea2ff; color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#0e1413; --surface:#161e1d; --surface-2:#1e2928;
   --fg:#e6ecea; --muted:#94a4a1; --line:#2c3938;
   --sea:#5fc5c9; --sea-soft:#13302f; --tangerine:#f0905a; --tangerine-soft:#35200f;
   --warn:#e0a861; --ok:#62c795;
-  --land:#1d2826; --water:#0d1a1d; --climb:#ff6b52; --day1:#5fc5c9; --day2:#f0905a; --mart:#6fcf86; --cafe:#c39be6; color-scheme:dark;
+  --land:#1d2826; --water:#0d1a1d; --climb:#ff6b52; --day1:#5fc5c9; --day2:#f0905a; --mart:#f5cf4a;--food:#f59a3c; --cafe:#6ea2ff; color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.6;font-size:15px}
@@ -163,6 +163,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .mapbox{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--water);
   aspect-ratio:16/10;touch-action:none;user-select:none;-webkit-user-select:none}
 @media (max-width:560px){.mapbox{aspect-ratio:1/1}}
+.mapbox{max-height:78vh}
 #jmap{display:block;width:100%;height:100%;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
 #jmap:active{cursor:grabbing}
 #jmap .land{fill:var(--land);stroke:none}
@@ -176,10 +177,12 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 #jmap .cert circle.c{fill:var(--surface);stroke:var(--day1);stroke-width:2.2}
 #jmap .cert text{fill:var(--fg);font:700 10px var(--body);text-anchor:middle;dominant-baseline:central}
 #jmap .node rect{fill:var(--surface);stroke:var(--fg);stroke-width:1.6}
-#jmap .pl circle.c{stroke:var(--surface);stroke-width:1.5}
-#jmap .pl.food circle.c{fill:var(--tangerine)}
-#jmap .pl.cafe circle.c{fill:var(--cafe)}
-#jmap .pl.mart circle.c{fill:var(--mart)}
+#jmap .pl .c{stroke:var(--surface);stroke-width:1.5}
+#jmap .pl text{font:700 9px var(--body);text-anchor:middle;dominant-baseline:central;fill:#fff;pointer-events:none}
+#jmap .pl.mart text{fill:#1c1c1c;font-size:8px}
+#jmap .pl.food .c{fill:var(--food)}
+#jmap .pl.cafe .c{fill:var(--cafe)}
+#jmap .pl.mart .c{fill:var(--mart)}
 #jmap .hotel rect{fill:var(--fg)}
 #jmap .hotel text{fill:var(--bg);font:700 10px var(--body);text-anchor:middle;dominant-baseline:central}
 #jmap .hotel.off{opacity:.35}
@@ -367,8 +370,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     <span><i style="background:var(--climb);height:6px"></i>주요 업힐</span>
     <span><i class="dot" style="background:var(--surface);border:2px solid var(--day1)"></i>인증센터</span>
     <span><i class="sq" style="background:var(--surface);border:1.5px solid var(--fg);transform:rotate(45deg)"></i>정차지점</span>
-    <span><i class="dot" style="background:var(--tangerine)"></i>식당</span><span><i class="dot" style="background:var(--cafe)"></i>카페·빵</span>
-    <span><i class="dot" style="background:var(--mart)"></i>편의점</span><span><i class="sq" style="background:var(--fg)"></i>숙소</span>
+    <span><svg class="lg" viewBox="-11 -11 22 22" width="18" height="18" aria-hidden="true"><circle r="8" fill="var(--food)"/><text y="0.3" fill="#fff" font-size="9" font-weight="700" text-anchor="middle" dominant-baseline="central">식</text></svg>식당</span><span><svg class="lg" viewBox="-11 -11 22 22" width="18" height="18" aria-hidden="true"><rect x="-7.5" y="-7.5" width="15" height="15" rx="3" fill="var(--cafe)"/><text y="0.3" fill="#fff" font-size="9" font-weight="700" text-anchor="middle" dominant-baseline="central">카</text></svg>카페·빵</span><span><svg class="lg" viewBox="-11 -11 22 22" width="18" height="18" aria-hidden="true"><path d="M0 -10.5 L9.5 6.5 L-9.5 6.5 Z" fill="var(--mart)"/><text y="1.8" fill="#1c1c1c" font-size="8" font-weight="700" text-anchor="middle" dominant-baseline="central">편</text></svg>편의점</span><span><i class="sq" style="background:var(--fg)"></i>숙소</span>
   </div>
   <div class="profbox"><svg id="jprof" aria-label="고도표"></svg></div>
 </div>
@@ -701,7 +703,11 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   Object.keys(J.SUP).forEach(function(key){ J.SUP[key].i.forEach(function(it, j){
     if (it.la == null || it.c === 'hotel') return; var q = px(it.la, it.lo);
     var g = marker(q[0], q[1], 'pl ' + it.c, G.places, {kind: 'place', key: key, j: j, plan: J.SUP[key].p || ''});
-    el('circle', {'class': 'hit', r: 13}, g); el('circle', {'class': 'c', r: 5.5}, g); }); });
+    el('circle', {'class': 'hit', r: 14}, g);
+    if (it.c === 'cafe') el('rect', {'class': 'c', x: -7.5, y: -7.5, width: 15, height: 15, rx: 3}, g);
+    else if (it.c === 'mart') el('path', {'class': 'c', d: 'M0 -10.5 L9.5 6.5 L-9.5 6.5 Z'}, g);
+    else el('circle', {'class': 'c', r: 8}, g);
+    el('text', {y: it.c === 'mart' ? 1.8 : 0.3}, g).textContent = ({food: '식', cafe: '카', mart: '편'})[it.c] || ''; }); });
   // 숙소 + 코스 연결선
   D.hotels.forEach(function(ho){ var q = px(ho.la, ho.lo), r = RP[idx(ho.km)];
     el('path', {'class': 'spur', d: 'M' + r[0] + ' ' + r[1] + 'L' + q[0] + ' ' + q[1], 'data-plan': ho.plan}, G.spur);
@@ -837,17 +843,22 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   var pop = document.getElementById('mpop'), hint = document.getElementById('maphint');
   function intro(){ closePop(); hint.innerHTML = introHtml(); }
   function introHtml(){ var A = D.plans[plan], last = A[1].nodes[A[1].nodes.length - 1];
-    return '<b>' + plan + '안</b> · 1일차 ' + A[0].nodes[0].t + ' 출발 → ' + A[0].nodes[A[0].nodes.length - 1].t + ' 숙소 · 2일차 ' + A[1].nodes[0].t + ' 출발 → ' + last.t + ' 완주<br>지도의 번호(인증센터), ◆(정차 지점), 점(보급), 숙(숙소), ↑(업힐)이나 코스 선을 누르면 정보 카드가 지도 위에 뜹니다.'; }
+    return '<b>' + plan + '안</b> · 1일차 ' + A[0].nodes[0].t + ' 출발 → ' + A[0].nodes[A[0].nodes.length - 1].t + ' 숙소 · 2일차 ' + A[1].nodes[0].t + ' 출발 → ' + last.t + ' 완주<br>지도의 번호(인증센터), ◆(정차 지점), 식·카·편(보급), 숙(숙소), ↑(업힐)이나 코스 선을 누르면 정보 카드가 지도 위에 뜹니다.'; }
   function closePop(){ pop.hidden = true; selG.style.display = 'none'; curG.style.display = 'none'; rescale(); }
   document.getElementById('mpx').addEventListener('click', closePop);
-  function openPop(){ pop.hidden = false; pop.scrollTop = 0; if (scrub) return;
+  function placePop(){ if (pop.hidden) return; var br = box.getBoundingClientRect(), vt = Math.max(br.top, 0), vbm = Math.min(br.bottom, window.innerHeight), vh = Math.max(vbm - vt, 160);
+    if (br.width >= 700){ pop.style.top = Math.max(10, vt - br.top + 10) + 'px'; pop.style.bottom = 'auto'; pop.style.maxHeight = (vh - 20) + 'px'; }
+    else { pop.style.top = 'auto'; pop.style.bottom = Math.max(8, br.bottom - vbm + 8) + 'px'; pop.style.maxHeight = Math.round(vh * .64) + 'px'; } }
+  window.addEventListener('scroll', placePop, {passive: true}); window.addEventListener('resize', placePop);
+  function openPop(){ pop.hidden = false; pop.scrollTop = 0; placePop(); if (scrub) return;
     // 표시한 지점이 카드에 가려지면 지도를 옮겨 보이게
     var t = selG.style.display !== 'none' ? selG : curG; if (t.style.display === 'none') return;
     var br = box.getBoundingClientRect(), pr = pop.getBoundingClientRect(), mr = t.getBoundingClientRect();
-    var mx = (mr.left + mr.right) / 2 - br.left, my = (mr.top + mr.bottom) / 2 - br.top, wide = pr.top - br.top < 40;
+    var mx = (mr.left + mr.right) / 2 - br.left, my = (mr.top + mr.bottom) / 2 - br.top, wide = br.width >= 700;
     var tx = mx, ty = my;
-    if (wide){ var freeR = pr.left - br.left; if (mx > freeR - 24) tx = freeR / 2; }
-    else { var freeB = pr.top - br.top; if (my > freeB - 24 || my < 20) ty = Math.max(30, freeB / 2); }
+    if (wide){ var freeR = pr.left - br.left; if (mx > freeR - 24) tx = freeR / 2;
+      var vt0 = Math.max(br.top, 0) - br.top + 30, vb0 = Math.min(br.bottom, window.innerHeight) - br.top - 30; if (my < vt0 || my > vb0) ty = (vt0 + vb0) / 2; }
+    else { var freeB = pr.top - br.top, top0 = Math.max(br.top, 0) - br.top + 20; if (my > freeB - 24 || my < top0) ty = (top0 + freeB) / 2; }
     if (tx !== mx || ty !== my){ var kk = vb.w / br.width; vb.x += (mx - tx) * kk; vb.y += (my - ty) * kk; apply(); } }
 
 
