@@ -234,6 +234,9 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .mpop{position:absolute;z-index:5;left:8px;right:8px;bottom:8px;max-height:64%;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px 0;box-shadow:0 8px 28px rgba(0,0,0,.22)}
 .mpop[hidden]{display:none}
+.photolink{display:flex;flex-direction:column;gap:2px;margin:12px 0;padding:12px 14px;border:1px solid var(--sea);border-radius:10px;background:var(--sea-soft);color:var(--fg);text-decoration:none}
+.photolink b{color:var(--sea)}
+.photolink span{font-size:13px;color:var(--muted)}
 .mpx{position:sticky;top:0;float:right;margin:-5px -6px 0 8px;width:34px;height:34px;border:0;border-radius:50%;background:var(--surface-2);color:var(--fg);font-size:20px;line-height:1;cursor:pointer}
 .mpop .minfo h4{padding-right:4px}
 @media (min-width:700px){.mpop{left:auto;right:56px;top:10px;bottom:auto;width:360px;max-height:calc(100% - 20px)}}
@@ -345,7 +348,8 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 </div>
 
 <h2>코스 지도</h2>
-<p>코스 좌표로 직접 그린 지도입니다. <b>지점·보급·업힐·코스 어디든 누르면</b> 아래에 도착 예정 시각, 구간 거리·주행 시간·상승고도와 네이버 지도 링크가 뜹니다. 두 손가락으로 확대하고 끌어서 옮기세요. 아래 고도표를 손가락으로 훑으면 지도 위에 그 위치가 표시됩니다.</p>
+<p>코스 좌표로 직접 그린 지도입니다. <b>지점·보급·업힐·코스 어디든 누르면</b> 지도 위 카드에 도착 예정 시각, 구간 거리·주행 시간·상승고도와 네이버 지도 링크가 뜹니다. 두 손가락으로 확대하고 끌어서 옮기세요. 아래 고도표를 손가락으로 훑으면 지도 위에 그 위치가 표시됩니다.</p>
+<a class="photolink" href="https://spong34.github.io/jeju-ride-2026/photos.html" target="_blank" rel="noopener"><b>종주 사진 — 지도·앨범·올리기</b><span>라이딩 중 찍은 사진을 셋이 올려 위치별로 봅니다 · 그룹 비밀번호 필요</span></a>
 <div class="mapwrap">
   <div class="maptools">
     <div class="segbtn" role="group" aria-label="일정 선택"><button type="button" data-plan="A" aria-pressed="true">A안 · 신신호텔</button><button type="button" data-plan="B" aria-pressed="false">B안 · 산방산</button></div>
