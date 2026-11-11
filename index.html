@@ -271,6 +271,31 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .jlb .nav[hidden]{display:none}
 .jlb .prev{left:6px} .jlb .next{right:6px}
 .jlb .cap{color:#e9eeee;padding:10px 16px max(14px,env(safe-area-inset-bottom,0px));font-size:14px}
+.pack{margin-top:14px}
+.packhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 12px}
+.packhead h3{margin:0}
+.pksum{display:flex;flex-wrap:wrap;gap:6px}
+.pksum span{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.pksum span.me{background:var(--sea);color:var(--bg)}
+.pkhelp{font-size:13px;margin:6px 0 10px}
+.pklogin{font-size:13.5px;color:var(--muted);margin:0 0 10px;padding:10px 12px;border-left:3px solid var(--sea);background:var(--sea-soft);border-radius:0 8px 8px 0}
+.pklogin b{color:var(--fg)}
+.pkadd{display:flex;gap:6px;flex-wrap:wrap}
+.pkadd input{flex:1 1 140px;min-width:0;font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);min-height:42px}
+.pkplus{flex:none;width:44px;min-height:42px;border:0;border-radius:8px;background:var(--sea);color:var(--bg);font:700 22px var(--body);cursor:pointer}
+.pkgo{border:0;border-radius:8px;background:var(--sea);color:var(--bg);font:600 14px var(--body);padding:0 16px;min-height:42px;cursor:pointer}
+.pklist{list-style:none;margin:10px 0 0;padding:0}
+.pklist li{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.pklist li.empty{color:var(--muted);font-size:14px}
+.pklist label{flex:1;display:flex;align-items:center;gap:10px;min-height:36px;cursor:pointer;min-width:0}
+.pklist input{width:20px;height:20px;flex:none;accent-color:var(--sea)}
+.pklist li.done .t{text-decoration:line-through;color:var(--muted)}
+.pklist .who{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.pklist .who i{font-style:normal;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--sea-soft);color:var(--fg);white-space:nowrap}
+.pkdel{flex:none;min-width:34px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:700 18px var(--body);cursor:pointer;padding:0 8px}
+.pkdel.arm{background:var(--climb);border-color:var(--climb);color:#fff;font-size:12.5px}
+.pkmsg{font-size:13px;margin:8px 0 0;min-height:1em}
+.pkmsg.bad{color:var(--climb)}
 .photolink{display:flex;flex-direction:column;gap:2px;margin:12px 0;padding:12px 14px;border:1px solid var(--sea);border-radius:10px;background:var(--sea-soft);color:var(--fg);text-decoration:none}
 .photolink b{color:var(--sea)}
 .photolink span{font-size:13px;color:var(--muted)}
@@ -642,6 +667,11 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     </ul>
   </div>
 </div>
+<div class="card pack">
+  <div class="packhead"><h3>준비물 체크리스트</h3><div class="pksum" id="pk-sum"></div></div>
+  <p class="muted pkhelp">셋이 같은 목록을 씁니다. +로 추가, −로 삭제(한 번 더 눌러 확인), 챙긴 물건은 체크하세요. 체크는 각자 따로 기록됩니다.</p>
+  <div id="pk-body"><p class="muted">불러오는 중…</p></div>
+</div>
 
 <hr class="hr">
 <p class="note">거리·고도·구간 시간은 RideWithGPS GPX(2,455포인트)를 50m 간격으로 재샘플링해 직접 계산했습니다. 속도는 물리 모델(시스템 73kg, CdA 0.33, Crr 0.006)에 신호·노면·재집결 보정 14%를 적용했고, 10월 25일 팔당 라이딩(100W / 평속 26.6km/h / 심박 147) 실측으로 검증했습니다. 공식 총거리는 234km로 안내되며 GPX 실측은 228.4km입니다.</p>
@@ -1002,6 +1032,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnbGFyZ3J4Z3BzbnhieXRoaHNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyMjEwMTAsImV4cCI6MjEwOTc5NzAxMH0.NNHEXuDO551a2FoYsvfw32Osvr9d9xnvCWfaV29BFmc';
   var GROUP_EMAIL = 'jeju-ride-2026@example.com', BUCKET = 'ride-photos';
   var SB = null; try { if (window.supabase && window.isSecureContext) SB = window.supabase.createClient(SUPA_URL, SUPA_KEY); } catch(e) {}
+  window.JEJU_SB = SB;
   var live = false, LV = {pings: [], photos: [], urls: {}, authed: false, lastW: 0, timer: null, err: ''};
   var NAME = ''; try { NAME = localStorage.getItem('jeju-photo-name') || ''; } catch(e) {}
   function lsGet(k){ try { return localStorage.getItem(k); } catch(e) { return null; } }
@@ -1230,6 +1261,58 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 </script>
 
 </div>
+<script>
+(function(){
+  var SB = window.JEJU_SB || null, GROUP_EMAIL = 'jeju-ride-2026@example.com';
+  var $ = function(id){ return document.getElementById(id); };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var name = function(){ try { return localStorage.getItem('jeju-photo-name') || ''; } catch(e) { return ''; } };
+  var ITEMS = [], CHECKS = [], busy = false;
+  function msg(t, bad){ var m = $('pk-msg'); m.textContent = t || ''; m.className = 'pkmsg' + (bad ? ' bad' : ''); }
+  function load(){
+    if (!SB){ $('pk-body').innerHTML = '<p class="muted">준비물 체크는 공개 주소(spong34.github.io/jeju-ride-2026)에서 함께 쓸 수 있습니다.</p>'; return; }
+    SB.auth.getSession().then(function(r){
+      if (!(r.data && r.data.session) || !name()) return login();
+      return Promise.all([SB.from('pack_items').select('id,text,added_by').order('id'), SB.from('pack_checks').select('item_id,who')]).then(function(rs){
+        if (rs[0].error) throw rs[0].error; if (rs[1].error) throw rs[1].error;
+        ITEMS = rs[0].data; CHECKS = rs[1].data; render(); }); })
+    .catch(function(e){ $('pk-body').innerHTML = '<p class="muted">준비물을 불러오지 못했습니다. ' + (/github\.io$/.test(location.hostname) ? '잠시 후 새로고침해 주세요.' : '공개 주소에서 열어 주세요.') + '</p>'; }); }
+  function login(){
+    $('pk-body').innerHTML = '<p class="pklogin"><b>준비물을 보고 입력하려면 이름과 그룹 비밀번호를 넣어 주세요.</b><br>이 기기에서는 한 번만 하면 됩니다. 사진 올리기·라이브 탭과 같은 로그인이라, 그쪽에서 이미 들어갔다면 여기도 바로 열립니다.</p><div class="pkadd"><input id="pk-nm" placeholder="이름" maxlength="12" value="' + esc(name()) + '"><input id="pk-pw" type="password" placeholder="그룹 비밀번호"><button type="button" id="pk-go" class="pkgo">들어가기</button></div><p class="pkmsg" id="pk-msg"></p>';
+    var go = $('pk-go'); $('pk-pw').onkeydown = function(e){ if (e.key === 'Enter') go.click(); };
+    go.onclick = function(){ var nm = $('pk-nm').value.trim(), pw = $('pk-pw').value; if (!nm || !pw) return msg('이름과 비밀번호를 넣어 주세요.', true);
+      go.disabled = true; SB.auth.signInWithPassword({email: GROUP_EMAIL, password: pw}).then(function(r){ if (r.error) throw r.error; try { localStorage.setItem('jeju-photo-name', nm); } catch(e) {} shell(); load(); })
+        .catch(function(e){ go.disabled = false; msg(/invalid/i.test(e && e.message || '') ? '비밀번호가 맞지 않습니다.' : '들어가지 못했습니다.', true); }); }; }
+  function shell(){
+    $('pk-body').innerHTML = '<div class="pkadd"><input id="pk-in" placeholder="준비물 추가 (예: 선글라스)" maxlength="60" enterkeyhint="done"><button type="button" id="pk-add" class="pkplus" aria-label="준비물 추가">+</button></div><ul class="pklist" id="pk-list"></ul><p class="pkmsg" id="pk-msg"></p>';
+    var add = function(){ var t = $('pk-in').value.trim(); if (!t || busy) return; busy = true;
+      SB.from('pack_items').insert({text: t.slice(0, 60), added_by: name()}).then(function(r){ busy = false; if (r.error) throw r.error; $('pk-in').value = ''; msg(''); load(); })
+        .catch(function(){ busy = false; msg('추가하지 못했습니다. 다시 눌러 주세요.', true); }); };
+    $('pk-add').onclick = add; $('pk-in').onkeydown = function(e){ if (e.key === 'Enter' && !e.isComposing) add(); };
+    $('pk-list').addEventListener('change', function(e){ var cb = e.target; if (!cb.matches('[data-ck]')) return;
+      var id = +cb.getAttribute('data-ck'), me = name(), on = cb.checked;
+      if (on) CHECKS.push({item_id: id, who: me}); else CHECKS = CHECKS.filter(function(c){ return !(c.item_id === id && c.who === me); }); render();
+      var q = on ? SB.from('pack_checks').upsert({item_id: id, who: me}) : SB.from('pack_checks').delete().eq('item_id', id).eq('who', me);
+      q.then(function(r){ if (r.error) throw r.error; }).catch(function(){ msg('저장하지 못했습니다. 다시 눌러 주세요.', true); load(); }); });
+    $('pk-list').addEventListener('click', function(e){ var b = e.target.closest('[data-del]'); if (!b) return; var id = +b.getAttribute('data-del');
+      if (!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent = '삭제?'; setTimeout(function(){ if (b.isConnected){ b.classList.remove('arm'); b.textContent = '−'; } }, 3000); return; }
+      ITEMS = ITEMS.filter(function(x){ return x.id !== id; }); render();
+      SB.from('pack_items').delete().eq('id', id).then(function(r){ if (r.error) throw r.error; }).catch(function(){ msg('삭제하지 못했습니다.', true); load(); }); }); }
+  function render(){
+    if (!$('pk-list')) shell();
+    var me = name(), people = [me]; CHECKS.forEach(function(c){ if (people.indexOf(c.who) < 0) people.push(c.who); });
+    var ids = ITEMS.map(function(x){ return x.id; }), cnt = {}; people.forEach(function(p){ cnt[p] = 0; });
+    CHECKS.forEach(function(c){ if (ids.indexOf(c.item_id) >= 0) cnt[c.who] = (cnt[c.who] || 0) + 1; });
+    $('pk-sum').innerHTML = ITEMS.length ? people.map(function(p){ return '<span' + (p === me ? ' class="me"' : '') + '>' + esc(p) + ' ' + cnt[p] + '/' + ITEMS.length + '</span>'; }).join('') : '';
+    $('pk-list').innerHTML = ITEMS.length ? ITEMS.map(function(it){
+      var who = CHECKS.filter(function(c){ return c.item_id === it.id; }).map(function(c){ return c.who; }), mine = who.indexOf(me) >= 0;
+      return '<li class="' + (mine ? 'done' : '') + '"><label><input type="checkbox" data-ck="' + it.id + '"' + (mine ? ' checked' : '') + '><span class="t">' + esc(it.text) + '</span></label>' +
+        '<span class="who">' + who.filter(function(w){ return w !== me; }).map(function(w){ return '<i>' + esc(w) + ' ✓</i>'; }).join('') + '</span>' +
+        '<button type="button" class="pkdel" data-del="' + it.id + '" aria-label="' + esc(it.text) + ' 삭제">−</button></li>'; }).join('') : '<li class="empty">목록이 비어 있습니다. 위에서 추가하세요.</li>'; }
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && $('pk-list')) load(); });
+  load();
+})();
+</script>
 
 </body>
 </html>
