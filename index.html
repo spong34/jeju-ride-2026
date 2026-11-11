@@ -296,6 +296,24 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .pkdel.arm{background:var(--climb);border-color:var(--climb);color:#fff;font-size:12.5px}
 .pkmsg{font-size:13px;margin:8px 0 0;min-height:1em}
 .pkmsg.bad{color:var(--climb)}
+.pick{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px}
+.pkh{font:500 12.5px var(--body);color:var(--muted);margin-left:4px}
+.pick button{width:100%;display:flex;align-items:center;gap:10px;text-align:left;font:inherit;color:var(--fg);background:var(--surface-2);border:0;border-radius:8px;padding:5px 10px;min-height:40px;cursor:pointer}
+.pick button:active{background:var(--sea-soft)}
+.pick .tx{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.pick .tx b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick .tx small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick i{flex:none;display:inline-flex;align-items:center;justify-content:center;font:700 11px var(--body);font-style:normal;width:24px;height:24px}
+.pick .pk-cert{border-radius:50%;border:2px solid var(--day1);background:var(--surface);color:var(--fg)}
+.pick .pk-node{width:11px;height:11px;margin:0 6.5px;border:1.5px solid var(--fg);background:var(--surface);transform:rotate(45deg)}
+.pick .pk-pl{color:#fff}
+.pick .pk-pl.food{border-radius:50%;background:var(--food)}
+.pick .pk-pl.cafe{border-radius:4px;background:var(--cafe);width:21px;height:21px;margin:0 1.5px}
+.pick .pk-pl.mart{background:var(--mart);color:#1c1c1c;clip-path:polygon(50% 0,100% 92%,0 92%);padding-top:6px;font-size:10px}
+.pick .pk-ho{border-radius:5px;background:var(--fg);color:var(--bg)}
+.pick .pk-cl{border-radius:50%;background:var(--climb);color:#fff;font-size:10px}
+.pick .pk-pg{width:14px;height:14px;margin:0 5px;border-radius:50%}
+.pick .pk-ph{width:auto;padding:0 6px;border-radius:999px;background:var(--tangerine);color:#fff;font-size:10.5px}
 .photolink{display:flex;flex-direction:column;gap:2px;margin:12px 0;padding:12px 14px;border:1px solid var(--sea);border-radius:10px;background:var(--sea-soft);color:var(--fg);text-decoration:none}
 .photolink b{color:var(--sea)}
 .photolink span{font-size:13px;color:var(--muted)}
@@ -818,9 +836,10 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   var vb = {x: 0, y: 0, w: 80, h: 50};
   var BB = (function(){ var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; RP.forEach(function(p){ x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }); return {x0: x0, y0: y0, x1: x1, y1: y1}; })();
   function aspect(){ var r = svg.getBoundingClientRect(); return r.width > 0 ? r.height / r.width : 0.625; }
-  function fit(){ var pad = 5, w = BB.x1 - BB.x0 + pad * 2, h = BB.y1 - BB.y0 + pad * 2, a = aspect();
-    if (h / w > a) w = h / a; else h = w * a;
-    vb = {x: (BB.x0 + BB.x1) / 2 - w / 2, y: (BB.y0 + BB.y1) / 2 - h / 2, w: w, h: h}; apply(); }
+  function fit(){ // 오른쪽 확대 버튼 줄(54px)에 코스가 가리지 않게 맞춤
+    var pad = 2.5, rw = BB.x1 - BB.x0 + pad * 2, rh = BB.y1 - BB.y0 + pad * 2, r = svg.getBoundingClientRect(), W = r.width || 600, H = r.height || W * .625;
+    var use = Math.max(W - 54, W * .7), sc = Math.max(rw / use, rh / (H - 8));
+    vb = {w: W * sc, h: H * sc, x: BB.x0 - pad - (use * sc - rw) / 2, y: (BB.y0 + BB.y1) / 2 - H * sc / 2}; apply(); }
   function k(){ var r = svg.getBoundingClientRect(); return r.width ? vb.w / r.width : 0.2; }
   function apply(){ vb.h = vb.w * aspect(); svg.setAttribute('viewBox', [vb.x, vb.y, vb.w, vb.h].join(' ')); rescale(); }
   function rescale(){ var s = k(); MK.forEach(function(g){ g.setAttribute('transform', 'translate(' + g._x + ',' + g._y + ') scale(' + s + ')'); });
@@ -857,16 +876,47 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     if (!Object.keys(ptrs).length) start = null; }
   svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', function(e){ delete ptrs[e.pointerId]; pinch = null; start = null; });
 
+  // 탭: 손가락 주변의 마커를 모두 모아서, 하나면 바로 열고 여러 개면 고르게 함
+  var PICK = [], pickAt = 0;
+  svg.addEventListener('touchend', function(e){ if (e.cancelable) e.preventDefault(); }, {passive: false}); // 탭 뒤 따라오는 가짜 클릭이 새 카드를 누르지 않게
+  function act(g){ var kd = g.getAttribute('data-kind');
+    if (kd === 'cert') return showCert(+g.getAttribute('data-n'));
+    if (kd === 'node') return showNode(+g.getAttribute('data-d'), +g.getAttribute('data-i'));
+    if (kd === 'place') return showPlace(g.getAttribute('data-key'), +g.getAttribute('data-j'));
+    if (kd === 'hotel') return showHotel(g.getAttribute('data-key'));
+    if (kd === 'climb') return showClimb(+g.getAttribute('data-i'));
+    if (kd === 'ping') return showPing(+g.getAttribute('data-id'), false);
+    if (kd === 'pcl') return openLB(CLs[+g.getAttribute('data-i')].items, 0); }
+  function nearby(cx, cy, R){ var out = [];
+    svg.querySelectorAll('[data-kind]').forEach(function(g){ var b = g.getBoundingClientRect(); if (!b.width) return;
+      var d = Math.hypot((b.left + b.right) / 2 - cx, (b.top + b.bottom) / 2 - cy); if (d <= R) out.push({g: g, d: d}); });
+    var kOrder = {pcl: 0, ping: 1, cert: 2, hotel: 3, place: 4, node: 5, climb: 6};
+    return out.sort(function(a, b){ return a.d - b.d || kOrder[a.g.getAttribute('data-kind')] - kOrder[b.g.getAttribute('data-kind')]; }).map(function(o){ return o.g; }); }
+  function pickInfo(g){ var kd = g.getAttribute('data-kind'), a = function(n){ return g.getAttribute('data-' + n); };
+    if (kd === 'cert'){ var c = D.certs[+a('n') - 1]; return {ic: '<i class="pk-cert">' + c[0] + '</i>', t: c[1] + ' 인증센터', s: f1(c[2]) + 'km'}; }
+    if (kd === 'node'){ var n = D.plans[plan][+a('d')].nodes[+a('i')]; return {ic: '<i class="pk-node"></i>', t: n.name, s: plan + '안 ' + D.plans[plan][+a('d')].label + ' · ' + n.t + ' 도착'}; }
+    if (kd === 'place'){ var it = J.SUP[a('key')].i[+a('j')], L = {food: '식', cafe: '카', mart: '편'}[it.c] || '';
+      return {ic: '<i class="pk-pl ' + it.c + '">' + L + '</i>', t: it.n, s: it.m + (it.km != null ? ' · ' + f1(it.km) + 'km' : '')}; }
+    if (kd === 'hotel'){ var ho = D.hotels.filter(function(x){ return x.key === a('key'); })[0]; return {ic: '<i class="pk-ho">숙</i>', t: ho.name, s: ho.plan + '안 숙소'}; }
+    if (kd === 'climb'){ var cl = D.climbs[+a('i')]; return {ic: '<i class="pk-cl">↑' + (+a('i') + 1) + '</i>', t: '주요 업힐 ↑' + (+a('i') + 1), s: f1(cl.s) + '~' + f1(cl.e) + 'km · +' + cl.g + 'm'}; }
+    if (kd === 'ping'){ var p = LV.pings.filter(function(x){ return x.id === +a('id'); })[0]; return {ic: '<i class="pk-pg" style="background:' + colorOf(p && p.who) + '"></i>', t: (p && p.who || '이름 없음') + ' 위치 기록', s: p ? dayLbl(p.ms) : ''}; }
+    if (kd === 'pcl'){ var cc = CLs[+a('i')]; return {ic: '<i class="pk-ph">사진</i>', t: '사진 ' + cc.items.length + '장', s: cc.items.map(function(x){ return x.uploader; }).filter(function(v, i, arr){ return arr.indexOf(v) === i; }).join(', ')}; }
+    return {ic: '', t: kd, s: ''}; }
+  function chooser(list){ PICK = list; selG.style.display = 'none'; curG.style.display = 'none'; rescale();
+    info.innerHTML = '<h4>이 근처 ' + list.length + '곳 <small class="pkh">하나를 고르세요</small></h4><ul class="pick">' + list.map(function(g, i){ var o = pickInfo(g);
+      return '<li><button type="button" data-pk="' + i + '">' + o.ic + '<span class="tx"><b>' + esc(o.t) + '</b><small>' + esc(o.s) + '</small></span></button></li>'; }).join('') +
+      '</ul><div class="acts"><button type="button" id="pkzoom">이 근처 크게 보기</button></div>';
+    pickAt = Date.now(); pop.hidden = false; pop.scrollTop = 0; placePop(); }
+  info.addEventListener('click', function(e){ if (Date.now() - pickAt < 400) return; var b = e.target.closest('[data-pk]'); if (b){ var g = PICK[+b.getAttribute('data-pk')]; if (g) act(g); return; }
+    if (e.target.id === 'pkzoom'){ var xs = PICK.map(function(g){ return g._x; }), ys = PICK.map(function(g){ return g._y; });
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+      var w = Math.max(1.2, (x1 - x0) * 3, (y1 - y0) * 3 / aspect()); vb.w = Math.min(w, vb.w); vb.h = vb.w * aspect();
+      vb.x = (x0 + x1) / 2 - vb.w / 2; vb.y = (y0 + y1) / 2 - vb.h / 2; closePop(); apply(); } });
   function tap(cx, cy){
-    var t = document.elementFromPoint(cx, cy), g = t && t.closest ? t.closest('[data-kind]') : null;
-    if (g && svg.contains(g)){ var kd = g.getAttribute('data-kind');
-      if (kd === 'cert') return showCert(+g.getAttribute('data-n'));
-      if (kd === 'node') return showNode(+g.getAttribute('data-d'), +g.getAttribute('data-i'));
-      if (kd === 'place') return showPlace(g.getAttribute('data-key'), +g.getAttribute('data-j'));
-      if (kd === 'hotel') return showHotel(g.getAttribute('data-key'));
-      if (kd === 'climb') return showClimb(+g.getAttribute('data-i'));
-      if (kd === 'ping') return showPing(+g.getAttribute('data-id'), false);
-      if (kd === 'pcl') return openLB(CLs[+g.getAttribute('data-i')].items, 0); }
+    var list = nearby(cx, cy, 24);
+    if (!list.length){ var t = document.elementFromPoint(cx, cy), g0 = t && t.closest ? t.closest('[data-kind]') : null; if (g0 && svg.contains(g0)) list = [g0]; }
+    if (list.length === 1) return act(list[0]);
+    if (list.length > 1) return chooser(list.slice(0, 12));
     var u = toUser(cx, cy), best = -1, bd = 1e9;
     for (var i = 0; i < RP.length; i++){ var d = Math.hypot(RP[i][0] - u[0], RP[i][1] - u[1]); if (d < bd){ bd = d; best = i; } }
     if (bd / k() <= 18) showRoute(R[best][3]); else closePop(); }
