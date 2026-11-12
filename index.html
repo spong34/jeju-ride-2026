@@ -254,6 +254,11 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .lvlog li{display:flex;gap:7px;align-items:baseline;padding:7px 2px;border-bottom:1px solid var(--line);cursor:pointer;color:var(--fg);font-size:13.5px}
 .lvlog li i{flex:none;width:10px;height:10px;border-radius:50%;align-self:center}
 .lvlog li span{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap}
+.lvhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px}
+.lvfold{font:600 12.5px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:7px;padding:5px 10px;cursor:pointer}
+.lvlast{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.lvlast button{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 10px;cursor:pointer}
+.lvlast i{width:9px;height:9px;border-radius:50%}
 .lvlogin{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .lvlogin input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0;flex:1 1 120px}
 .lvlogin button{font:600 14px var(--body);border:0;border-radius:8px;background:var(--sea);color:var(--bg);padding:8px 14px;cursor:pointer}
@@ -1197,12 +1202,17 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
       return; }
     if (LV.err){ hint.innerHTML = '<b>라이브</b> · 기록을 불러오지 못했습니다. ' + (/github\.io$/.test(location.hostname) ? '잠시 후 새로고침해 주세요. (' + esc(LV.err) + ')' : '공개 주소(spong34.github.io/jeju-ride-2026)에서 열어 주세요.'); return; }
     var recent = LV.pings.slice(-30).reverse();
-    var h = '<b>라이브</b> · 기록 ' + LV.pings.length + '건 · 사진 ' + LV.photos.length + '장 · ' + kst(Date.now()).hm + ' 갱신';
-    if (!recent.length) h += '<br>아직 기록이 없습니다. 라이딩 당일 ◎를 누르고 "기록 남기기"를 고르면 여기에 쌓입니다.';
+    var open = lsGet('jeju-lvopen') === '1';
+    var h = '<span class="lvhead"><span><b>라이브</b> · 기록 ' + LV.pings.length + '건 · 사진 ' + LV.photos.length + '장 · ' + kst(Date.now()).hm + ' 갱신</span>' +
+      (recent.length ? '<button type="button" class="lvfold" id="lv-fold" aria-expanded="' + open + '">' + (open ? '기록 접기 ▴' : '기록 펼치기 ▾') + '</button>' : '') + '</span>';
+    if (!recent.length) h += '<br>아직 기록이 없습니다. ◎를 누르고 "기록 남기기"를 고르면 여기에 쌓입니다.';
+    else if (!open){ var lastBy = {}; LV.pings.forEach(function(p){ lastBy[p.who || ''] = p; });
+      h += '<span class="lvlast">' + Object.keys(lastBy).map(function(w){ var p = lastBy[w], W = where(p.lat, p.lon);
+        return '<button type="button" data-ping="' + p.id + '"><i style="background:' + colorOf(p.who) + '"></i>' + esc(w || '이름 없음') + ' ' + kst(p.ms).hm + ' · ' + f1(W.km) + 'km</button>'; }).join('') + '</span>'; }
     else h += '<ol class="lvlog">' + recent.map(function(p){ var W = where(p.lat, p.lon);
       return '<li data-ping="' + p.id + '"><i style="background:' + colorOf(p.who) + '"></i><b>' + kst(p.ms).hm + '</b> ' + esc(p.who || '이름 없음') + ' — 코스 ' + f1(W.km) + 'km' + (W.near ? ' · ' + esc(W.near) + ' 부근' : '') + ' <span>' + ago(p.ms) + '</span></li>'; }).join('') + '</ol>';
     hint.innerHTML = h; }
-  hint.addEventListener('click', function(e){ var li = e.target.closest('[data-ping]'); if (li) showPing(+li.getAttribute('data-ping'), true); });
+  hint.addEventListener('click', function(e){ if (e.target.id === 'lv-fold'){ lsSet('jeju-lvopen', lsGet('jeju-lvopen') === '1' ? '0' : '1'); liveHint(); return; } var li = e.target.closest('[data-ping]'); if (li) showPing(+li.getAttribute('data-ping'), true); });
   function showPing(id, focus){ var p = LV.pings.filter(function(x){ return x.id === id; })[0]; if (!p) return;
     var q = px(p.lat, p.lon), W = where(p.lat, p.lon);
     if (focus){ vb.w = Math.min(vb.w, 10); vb.h = vb.w * aspect(); vb.x = q[0] - vb.w / 2; vb.y = q[1] - vb.h * .3; apply(); }
