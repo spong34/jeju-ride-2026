@@ -259,6 +259,8 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .lvlast{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .lvlast button{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 10px;cursor:pointer}
 .lvlast i{width:9px;height:9px;border-radius:50%}
+.lvph{margin-top:8px}
+.lvph summary{cursor:pointer;font-size:13px;color:var(--sea);font-weight:600}
 .lvlogin{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .lvlogin input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);min-width:0;flex:1 1 120px}
 .lvlogin button{font:600 14px var(--body);border:0;border-radius:8px;background:var(--sea);color:var(--bg);padding:8px 14px;cursor:pointer}
@@ -1128,7 +1130,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     var st = lsGet('jeju-log');
     if (st === 'yes'){ logPing(la, lo, acc, true).then(function(ok){ if (ok) info.insertAdjacentHTML('beforeend', '<p class="muted">팀 기록에 남겼습니다 · ' + esc(NAME || '이름 없음') + '</p>'); }); return; }
     if (st === 'no') return;
-    info.insertAdjacentHTML('beforeend', '<div class="logask"><b>이 위치를 팀 기록에 남길까요?</b><span>라이브 탭에 "' + esc(NAME || '이름 없음') + '" 이름으로 시각과 위치가 표시됩니다. 남기기를 고르면 오늘은 작전판을 열 때마다 자동으로 남깁니다.</span>' +
+    info.insertAdjacentHTML('beforeend', '<div class="logask"><b>이 위치를 팀 기록에 남길까요?</b><span>라이브 탭에 "' + esc(NAME || '이름 없음') + '" 이름으로 시각과 위치가 표시됩니다(링크를 아는 사람은 로그인 없이 볼 수 있음). 남기기를 고르면 오늘은 작전판을 열 때마다 자동으로 남깁니다.</span>' +
       '<div class="acts"><button type="button" class="pri" data-log="yes">기록 남기기</button><button type="button" data-log="no">남기지 않기</button></div></div>');
     info.querySelectorAll('[data-log]').forEach(function(b){ b.onclick = function(){ var v = b.getAttribute('data-log'); lsSet('jeju-log', v); var box2 = info.querySelector('.logask');
       if (v === 'yes') logPing(la, lo, acc, true).then(function(ok){ box2.innerHTML = ok ? '<b>기록했습니다.</b><span>라이브 탭에서 셋의 위치를 볼 수 있습니다.</span>' : '<b>기록하지 못했습니다.</b><span>잠시 후 ◎를 다시 눌러 주세요.</span>'; });
@@ -1145,11 +1147,11 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   // 불러오기
   function loadLive(){
     if (!SB){ LV.err = 'nosb'; return Promise.resolve(drawLive()); }
-    return SB.auth.getSession().then(function(r){ LV.authed = !!(r.data && r.data.session); if (!LV.authed) return null;
-      return Promise.all([SB.from('ride_pings').select('id,who,at,lat,lon,acc').order('at').limit(3000), SB.from('ride_photos').select('*').order('taken_at')]); })
+    return SB.auth.getSession().then(function(r){ LV.authed = !!(r.data && r.data.session);
+      return Promise.all([SB.from('ride_pings').select('id,who,at,lat,lon,acc').order('at').limit(3000), LV.authed ? SB.from('ride_photos').select('*').order('taken_at') : Promise.resolve({data: []})]); })
       .then(function(rs){ LV.err = ''; if (!rs) return;
         if (rs[0].error) throw rs[0].error; if (rs[1].error) throw rs[1].error;
-        LV.pings = rs[0].data.map(function(p){ p.ms = Date.parse(p.at); return p; }); LV.photos = rs[1].data;
+        LV.pings = rs[0].data.map(function(p){ p.ms = Date.parse(p.at); return p; }); LV.photos = rs[1].data || [];
         var need = LV.photos.map(function(p){ return p.thumb; }).filter(function(t){ return !LV.urls[t]; });
         return need.length ? SB.storage.from(BUCKET).createSignedUrls(need, 6 * 3600).then(function(u){ (u.data || []).forEach(function(x){ LV.urls[x.path] = x.signedUrl; }); }) : null; })
       .catch(function(e){ LV.err = (e && e.message) || String(e); })
@@ -1166,7 +1168,6 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     MK = MK.filter(function(m){ return !G.live.contains(m); }); CLs = [];
     if (!live) return;
     updTools(); liveHint();
-    if (!LV.authed) return rescale();
     var s = k(), by = {};
     if (document.getElementById('lv-ping').checked){
       LV.pings.forEach(function(p){ var w = p.who || ''; (by[w] = by[w] || []).push(p); });
@@ -1178,7 +1179,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
           if (lastOne){ el('circle', {r: 11, fill: col}, g); el('text', {'class': 'ini'}, g).textContent = w.slice(0, 1);
             var t = el('text', {'class': 'lab', x: 15, y: 1}, g); t.textContent = w + ' ' + kst(p.ms).hm; }
           else el('circle', {r: w ? 4 : 5, fill: col, 'class': w ? 'pt' : 'pt anon'}, g); }); }); }
-    if (document.getElementById('lv-photo').checked){
+    if (LV.authed && document.getElementById('lv-photo').checked){
       var cell = 44 * s, pts = [];
       LV.photos.forEach(function(p){ var L = photoLoc(p); if (L){ var q = px(L[0], L[1]); pts.push({p: p, x: q[0], y: q[1]}); } });
       pts.forEach(function(o){ for (var i = 0; i < CLs.length; i++){ var c = CLs[i]; if (Math.abs(c.x - o.x) < cell && Math.abs(c.y - o.y) < cell){ c.items.push(o.p); return; } } CLs.push({x: o.x, y: o.y, items: [o.p]}); });
@@ -1191,15 +1192,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     LV.lastW = vb.w; rescale(); }
   function liveHint(){
     if (!SB){ hint.innerHTML = '<b>라이브</b> · 이 화면에서는 기록을 불러올 수 없습니다. 공개 주소(spong34.github.io/jeju-ride-2026)로 여세요.'; return; }
-    if (!LV.authed){ hint.innerHTML = '<b>라이브</b> · 셋의 위치 기록과 사진은 그룹 비밀번호로 봅니다.' +
-      '<span class="lvlogin"><input type="text" id="lv-nm" placeholder="이름" maxlength="12" value="' + esc(NAME) + '"><input type="password" id="lv-pw" placeholder="그룹 비밀번호"><button type="button" id="lv-go">들어가기</button></span><span class="err" id="lv-err"></span>';
-      var go = document.getElementById('lv-go'), pw = document.getElementById('lv-pw');
-      pw.onkeydown = function(e){ if (e.key === 'Enter') go.click(); };
-      go.onclick = function(){ var nm = document.getElementById('lv-nm').value.trim(), er = document.getElementById('lv-err');
-        if (!nm || !pw.value){ er.textContent = '이름과 비밀번호를 넣어 주세요.'; return; } go.disabled = true;
-        SB.auth.signInWithPassword({email: GROUP_EMAIL, password: pw.value}).then(function(r){ if (r.error) throw r.error; NAME = nm; lsSet('jeju-photo-name', nm); loadLive(); })
-          .catch(function(e){ er.textContent = /invalid/i.test(e && e.message || '') ? '비밀번호가 맞지 않습니다.' : '들어가지 못했습니다.'; go.disabled = false; }); };
-      return; }
+    if (hint.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return; // 비밀번호 입력 중에는 다시 그리지 않음
     if (LV.err){ hint.innerHTML = '<b>라이브</b> · 기록을 불러오지 못했습니다. ' + (/github\.io$/.test(location.hostname) ? '잠시 후 새로고침해 주세요. (' + esc(LV.err) + ')' : '공개 주소(spong34.github.io/jeju-ride-2026)에서 열어 주세요.'); return; }
     var recent = LV.pings.slice(-30).reverse();
     var open = lsGet('jeju-lvopen') === '1';
@@ -1211,7 +1204,16 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
         return '<button type="button" data-ping="' + p.id + '"><i style="background:' + colorOf(p.who) + '"></i>' + esc(w || '이름 없음') + ' ' + kst(p.ms).hm + ' · ' + f1(W.km) + 'km</button>'; }).join('') + '</span>'; }
     else h += '<ol class="lvlog">' + recent.map(function(p){ var W = where(p.lat, p.lon);
       return '<li data-ping="' + p.id + '"><i style="background:' + colorOf(p.who) + '"></i><b>' + kst(p.ms).hm + '</b> ' + esc(p.who || '이름 없음') + ' — 코스 ' + f1(W.km) + 'km' + (W.near ? ' · ' + esc(W.near) + ' 부근' : '') + ' <span>' + ago(p.ms) + '</span></li>'; }).join('') + '</ol>';
-    hint.innerHTML = h; }
+    if (!LV.authed) h += '<details class="lvph"' + (LV.phOpen ? ' open' : '') + '><summary>사진도 보려면 그룹 비밀번호로 로그인</summary>' + '<span class="lvlogin"><input type="text" id="lv-nm" placeholder="이름" maxlength="12" value="' + esc(NAME) + '"><input type="password" id="lv-pw" placeholder="그룹 비밀번호"><button type="button" id="lv-go">들어가기</button></span><span class="err" id="lv-err"></span>' + '</details>';
+    hint.innerHTML = h;
+    if (!LV.authed){ var dt = hint.querySelector('.lvph'); dt.ontoggle = function(){ LV.phOpen = dt.open; };
+      var go = document.getElementById('lv-go'), pw = document.getElementById('lv-pw');
+      pw.onkeydown = function(e){ if (e.key === 'Enter') go.click(); };
+      go.onclick = function(){ var nm = document.getElementById('lv-nm').value.trim(), er = document.getElementById('lv-err');
+        if (!nm || !pw.value){ er.textContent = '이름과 비밀번호를 넣어 주세요.'; return; } go.disabled = true;
+        SB.auth.signInWithPassword({email: GROUP_EMAIL, password: pw.value}).then(function(r){ if (r.error) throw r.error; NAME = nm; lsSet('jeju-photo-name', nm); loadLive(); })
+          .catch(function(e){ er.textContent = /invalid/i.test(e && e.message || '') ? '비밀번호가 맞지 않습니다.' : '들어가지 못했습니다.'; go.disabled = false; }); };
+    } }
   hint.addEventListener('click', function(e){ if (e.target.id === 'lv-fold'){ lsSet('jeju-lvopen', lsGet('jeju-lvopen') === '1' ? '0' : '1'); liveHint(); return; } var li = e.target.closest('[data-ping]'); if (li) showPing(+li.getAttribute('data-ping'), true); });
   function showPing(id, focus){ var p = LV.pings.filter(function(x){ return x.id === id; })[0]; if (!p) return;
     var q = px(p.lat, p.lon), W = where(p.lat, p.lon);
