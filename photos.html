@@ -159,7 +159,7 @@ progress{width:100%;height:10px}
       <input type="file" id="files" multiple accept="image/jpeg,image/heic,image/heif,image/*">
     </label>
     <ul class="rules">
-      <li>촬영 시각이 <b>11/12 07:30~20:00</b> 또는 <b>11/13 06:00~17:00</b>인 사진만 통과합니다.</li>
+      <li>촬영 시각이 <b>11/12 05:00~22:00</b> 또는 <b>11/13 05:00~18:00</b>인 사진만 통과합니다.</li>
       <li>사진에 위치 정보가 남아 있으면 코스에서 3km 안이어야 통과합니다. 위치가 지워진 사진은 주행 기록의 같은 시각 위치로 지도에 찍힙니다.</li>
       <li>촬영 시각이 없는 사진(스크린샷, 받은 사진)과 PNG는 올라가지 않습니다.</li>
       <li>올릴 때 크기를 줄이고 촬영 정보를 모두 지웁니다. 통과한 사진도 체크를 풀면 빠집니다.</li>
@@ -186,7 +186,7 @@ var SUPA_URL = 'https://bglargrxgpsnxbythhsg.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnbGFyZ3J4Z3BzbnhieXRoaHNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyMjEwMTAsImV4cCI6MjEwOTc5NzAxMH0.NNHEXuDO551a2FoYsvfw32Osvr9d9xnvCWfaV29BFmc';
 var GROUP_EMAIL = 'jeju-ride-2026@example.com';
 var BUCKET = 'ride-photos';
-var WIN = [{day: 0, d: '2026-11-12', a: '07:30', b: '20:00'}, {day: 1, d: '2026-11-13', a: '06:00', b: '17:00'}];
+var WIN = [{day: 0, d: '2026-11-12', a: '05:00', b: '22:00'}, {day: 1, d: '2026-11-13', a: '05:00', b: '18:00'}];
 var MAX_OFF_KM = 3;
 
 var P = JSON.parse(document.getElementById('pdata').textContent);
@@ -404,7 +404,7 @@ function judge(file){
     if (g && isFinite(g.latitude) && isFinite(g.longitude) && !(g.latitude === 0 && g.longitude === 0)){ c.la = g.latitude; c.lo = g.longitude; }
     if (c.ms == null){ c.why = '촬영 시각 정보가 없어 제외 (스크린샷·받은 사진일 수 있음)'; return c; }
     var w = inWin(c.ms);
-    if (!w){ c.why = '라이딩 시간(11/12 07:30~20:00, 11/13 06:00~17:00)이 아니라 제외'; return c; }
+    if (!w){ c.why = '라이딩 시간(11/12 05:00~22:00, 11/13 05:00~18:00)이 아니라 제외'; return c; }
     if (c.la != null){ var n = nearest(c.la, c.lo); if (n.off > MAX_OFF_KM){ c.why = '코스에서 ' + n.off.toFixed(1) + 'km 떨어진 곳이라 제외'; return c; }
       c.ok = true; c.src = 'gps'; c.why = '통과 · 코스 ' + n.km.toFixed(1) + 'km (사진 위치)'; return c; }
     c.ok = true; c.src = 'time'; c.why = '통과 · 위치는 주행 기록으로 찍힘'; return c; });
