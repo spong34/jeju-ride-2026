@@ -1164,9 +1164,14 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   LV.strava = null;
   function loadStrava(){ if (LV.strava) return Promise.resolve(); return fetch('strava.json', {cache: 'no-cache'}).then(function(r){ return r.ok ? r.json() : []; }).then(function(j){ LV.strava = j || []; }).catch(function(){ LV.strava = []; }); }
   function photoLoc(p){ if (p.lat != null) return [p.lat, p.lon];
-    var t = Date.parse(p.taken_at), best = null, bd = 20 * 60e3;
-    LV.pings.forEach(function(g){ var d = Math.abs(g.ms - t) * (g.who === p.uploader ? 1 : 1.5); if (d < bd){ bd = d; best = g; } });
-    return best ? [best.lat, best.lon] : null; }
+    // 사진에 위치가 없으면 같은 시각 앞뒤의 위치 기록(셋 모두, 함께 달리므로)으로 찾음
+    var t = Date.parse(p.taken_at), P = LV.pings, n = P.length; if (!n) return null;
+    var lo = 0, hi = n - 1; while (lo < hi){ var m = (lo + hi) >> 1; if (P[m].ms < t) lo = m + 1; else hi = m; }
+    var b2 = P[lo], a2 = P[Math.max(0, lo - 1)]; if (b2.ms < t){ a2 = b2; }
+    var da = Math.abs(t - a2.ms), db = Math.abs(b2.ms - t), L = 30 * 60e3;
+    if (da > L && db > L) return null;
+    if (a2 === b2 || b2.ms - a2.ms > 60 * 60e3 || b2.ms < t || a2.ms > t) return da <= db ? [a2.lat, a2.lon] : [b2.lat, b2.lon];
+    var f = (t - a2.ms) / (b2.ms - a2.ms); return [a2.lat + (b2.lat - a2.lat) * f, a2.lon + (b2.lon - a2.lon) * f]; }
 
   // 그리기
   var CLs = [];

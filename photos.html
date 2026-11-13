@@ -236,12 +236,14 @@ var RP = R.map(function(p){ return px(p[0], p[1]); });
 function nearest(la, lo){ var q = px(la, lo), bi = 0, bd = 1e9;
   for (var i = 0; i < RP.length; i++){ var d = Math.hypot(RP[i][0] - q[0], RP[i][1] - q[1]); if (d < bd){ bd = d; bi = i; } }
   return {km: R[bi][2], off: bd}; }
-var TRACK = null; // [[epochSec, lat, lon], ...] — 라이딩 후 Strava 기록으로 채움
+var TRACK = null; // [[epochSec, lat, lon], ...] — 라이브 위치 기록
 function fromTrack(ms){ if (!TRACK || !TRACK.length) return null; var t = ms / 1000;
   if (t < TRACK[0][0] - 600 || t > TRACK[TRACK.length - 1][0] + 600) return null;
   var lo = 0, hi = TRACK.length - 1; while (lo < hi){ var m = (lo + hi) >> 1; if (TRACK[m][0] < t) lo = m + 1; else hi = m; }
   var b = TRACK[lo], a = TRACK[Math.max(0, lo - 1)];
-  if (Math.abs(b[0] - t) > 1800 && Math.abs(a[0] - t) > 1800) return null; // 30분 넘게 기록이 없으면 포기
+  var da = Math.abs(t - a[0]), db = Math.abs(b[0] - t);
+  if (da > 1800 && db > 1800) return null; // 앞뒤 30분 안에 기록이 없으면 포기
+  if (b[0] - a[0] > 3600) return da <= db ? [a[1], a[2]] : [b[1], b[2]]; // 기록 간격이 1시간 넘으면 가까운 쪽 위치
   var f = b[0] === a[0] ? 0 : Math.max(0, Math.min(1, (t - a[0]) / (b[0] - a[0])));
   return [a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; }
 function locOf(row){ if (row.lat != null) return {la: row.lat, lo: row.lon, src: 'gps'};
@@ -284,7 +286,8 @@ function tab(t){ document.querySelectorAll('.tabs button').forEach(function(b){ 
 var ROWS = [], URLS = {};
 function enter(){ show('app'); $('who').innerHTML = '<b>' + esc(NAME) + '</b>으로 들어옴'; refresh(); }
 function refresh(){
-  var tr = TRACK ? Promise.resolve() : fetch('track.json', {cache: 'no-cache'}).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ TRACK = j; }).catch(function(){});
+  // 위치 정보가 없는 사진은 셋의 라이브 위치 기록(같은 시각)으로 위치를 찾음
+  var tr = (typeof sb !== 'undefined' && sb) ? sb.from('ride_pings').select('at,lat,lon').order('at').limit(5000).then(function(r){ if (!r.error) TRACK = r.data.map(function(g){ return [Date.parse(g.at) / 1000, g.lat, g.lon]; }); }).catch(function(){}) : Promise.resolve();
   return Promise.all([B.list(), tr]).then(function(r){ ROWS = r[0] || [];
     var need = []; ROWS.forEach(function(x){ if (!URLS[x.thumb]) need.push(x.thumb); });
     return B.urls(need); }).then(function(u){ for (var k in u) URLS[k] = u[k]; renderAlbum(); drawPhotos(); })
