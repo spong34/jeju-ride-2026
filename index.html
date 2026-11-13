@@ -241,8 +241,9 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .lvbtn{font:600 12.5px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:7px;padding:6px 10px;cursor:pointer;text-decoration:none}
 .lvbtn[aria-pressed="true"]{background:var(--sea);border-color:var(--sea);color:var(--bg)}
 .lvwho{color:var(--muted);font-size:12px}
-#jmap .strava{fill:none;stroke:#fc4c02;stroke-width:6;stroke-opacity:.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.swatch-strava{display:inline-block;width:18px;height:5px;border-radius:3px;background:#fc4c02;opacity:.6;vertical-align:middle}
+#jmap .strava{fill:none;stroke-width:6;stroke-opacity:.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.swatch-strava{display:inline-block;width:18px;height:5px;border-radius:3px;background:#fc4c02;opacity:.6;vertical-align:middle;margin:0 2px 0 4px}
+.swatch-strava.d2{background:#7c3aed}
 #jmap .trail{fill:none;stroke-width:2;vector-effect:non-scaling-stroke;opacity:.6;stroke-dasharray:5 4}
 #jmap .ping .pt{stroke:var(--surface);stroke-width:1.2}
 #jmap .ping.last > circle:not(.hit){stroke:var(--surface);stroke-width:2.5}
@@ -452,7 +453,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     <div class="livetools" id="livetools" hidden>
       <label><input type="checkbox" id="lv-ping" checked> 위치 기록</label>
       <label><input type="checkbox" id="lv-photo" checked> 사진</label>
-      <label><input type="checkbox" id="lv-strava" checked> 지나온 경로 <span class="swatch-strava"></span></label>
+      <label><input type="checkbox" id="lv-strava" checked> 지나온 경로 <span class="swatch-strava"></span>1일 <span class="swatch-strava d2"></span>2일</label>
       <button type="button" class="lvbtn" id="lv-log" aria-pressed="false">내 위치 기록 꺼짐</button>
       <button type="button" class="lvbtn" id="lv-ref">새로고침</button>
       <a class="lvbtn" href="https://spong34.github.io/jeju-ride-2026/photos.html" target="_blank" rel="noopener">사진 올리기</a>
@@ -1175,7 +1176,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     if (!live) return;
     updTools(); liveHint();
     if (LV.strava && document.getElementById('lv-strava').checked) LV.strava.forEach(function(t){
-      el('path', {'class': 'strava', d: t.pts.map(function(q, i){ var z = px(q[0], q[1]); return (i ? 'L' : 'M') + z[0].toFixed(3) + ' ' + z[1].toFixed(3); }).join('')}, gStr); });
+      el('path', {'class': 'strava', stroke: t.color || '#fc4c02', d: t.pts.map(function(q, i){ var z = px(q[0], q[1]); return (i ? 'L' : 'M') + z[0].toFixed(3) + ' ' + z[1].toFixed(3); }).join('')}, gStr); });
     var s = k(), by = {};
     if (document.getElementById('lv-ping').checked){
       LV.pings.forEach(function(p){ var w = p.who || ''; (by[w] = by[w] || []).push(p); });
