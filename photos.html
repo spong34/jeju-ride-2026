@@ -441,7 +441,7 @@ function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : String(Date.no
 function upload(){
   var todo = CANDS.filter(function(c){ return c.on; }), done = 0, fail = 0; $('upgo').disabled = true;
   $('upbar').innerHTML = '<progress max="' + todo.length + '" value="0"></progress><p class="small muted" id="upmsg"></p>';
-  var who = NAME.replace(/[^\w가-힣-]/g, '').slice(0, 12) || 'x';
+  var who = NAME.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 12) || 'u'; // 저장소 경로는 영문·숫자만 가능 (올린 사람 이름은 표에 따로 저장)
   (function next(){ if (!todo.length) return fin(); var c = todo.shift(), id = uid(), day = kst(c.ms).d;
     var path = day + '/' + who + '/' + id + '.jpg', thumb = day + '/' + who + '/' + id + '_t.jpg', full;
     shrink(c.file, 2048, .85).then(function(f){ full = f; return B.put(path, f.blob); })
