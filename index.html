@@ -241,6 +241,8 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 .lvbtn{font:600 12.5px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:7px;padding:6px 10px;cursor:pointer;text-decoration:none}
 .lvbtn[aria-pressed="true"]{background:var(--sea);border-color:var(--sea);color:var(--bg)}
 .lvwho{color:var(--muted);font-size:12px}
+#jmap .strava{fill:none;stroke:#fc4c02;stroke-width:6;stroke-opacity:.5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.swatch-strava{display:inline-block;width:18px;height:5px;border-radius:3px;background:#fc4c02;opacity:.6;vertical-align:middle}
 #jmap .trail{fill:none;stroke-width:2;vector-effect:non-scaling-stroke;opacity:.6;stroke-dasharray:5 4}
 #jmap .ping .pt{stroke:var(--surface);stroke-width:1.2}
 #jmap .ping.last > circle:not(.hit){stroke:var(--surface);stroke-width:2.5}
@@ -450,6 +452,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     <div class="livetools" id="livetools" hidden>
       <label><input type="checkbox" id="lv-ping" checked> 위치 기록</label>
       <label><input type="checkbox" id="lv-photo" checked> 사진</label>
+      <label><input type="checkbox" id="lv-strava" checked> 지나온 경로 <span class="swatch-strava"></span></label>
       <button type="button" class="lvbtn" id="lv-log" aria-pressed="false">내 위치 기록 꺼짐</button>
       <button type="button" class="lvbtn" id="lv-ref">새로고침</button>
       <a class="lvbtn" href="https://spong34.github.io/jeju-ride-2026/photos.html" target="_blank" rel="noopener">사진 올리기</a>
@@ -1096,7 +1099,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   function lsSet(k, v){ try { localStorage.setItem(k, v); } catch(e) {} }
   var wrapEl = document.querySelector('.mapwrap'), liveTools = document.getElementById('livetools');
   G.live = el('g', {'class': 'g-live'}, null); svg.insertBefore(G.live, G.sel); G.live.style.display = 'none';
-  var gTrail = el('g', {}, G.live), gPing = el('g', {}, G.live), gPh = el('g', {}, G.live);
+  var gStr = el('g', {}, G.live), gTrail = el('g', {}, G.live), gPing = el('g', {}, G.live), gPh = el('g', {}, G.live);
 
   // 날짜·시각 (한국 시각)
   var RIDE = [['2026-11-12', '06:00', '21:00'], ['2026-11-13', '05:00', '18:00']];
@@ -1146,9 +1149,10 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
 
   // 불러오기
   function loadLive(){
+    loadStrava().then(function(){ if (live) drawLive(); });
     if (!SB){ LV.err = 'nosb'; return Promise.resolve(drawLive()); }
     return SB.auth.getSession().then(function(r){ LV.authed = !!(r.data && r.data.session);
-      return Promise.all([SB.from('ride_pings').select('id,who,at,lat,lon,acc').order('at').limit(3000), LV.authed ? SB.from('ride_photos').select('*').order('taken_at') : Promise.resolve({data: []})]); })
+      return Promise.all([SB.from('ride_pings').select('id,who,at,lat,lon,acc').order('at').limit(3000), SB.from('ride_photos').select('*').order('taken_at')]); })
       .then(function(rs){ LV.err = ''; if (!rs) return;
         if (rs[0].error) throw rs[0].error; if (rs[1].error) throw rs[1].error;
         LV.pings = rs[0].data.map(function(p){ p.ms = Date.parse(p.at); return p; }); LV.photos = rs[1].data || [];
@@ -1156,6 +1160,8 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
         return need.length ? SB.storage.from(BUCKET).createSignedUrls(need, 6 * 3600).then(function(u){ (u.data || []).forEach(function(x){ LV.urls[x.path] = x.signedUrl; }); }) : null; })
       .catch(function(e){ LV.err = (e && e.message) || String(e); })
       .then(function(){ drawLive(); }); }
+  LV.strava = null;
+  function loadStrava(){ if (LV.strava) return Promise.resolve(); return fetch('strava.json', {cache: 'no-cache'}).then(function(r){ return r.ok ? r.json() : []; }).then(function(j){ LV.strava = j || []; }).catch(function(){ LV.strava = []; }); }
   function photoLoc(p){ if (p.lat != null) return [p.lat, p.lon];
     var t = Date.parse(p.taken_at), best = null, bd = 20 * 60e3;
     LV.pings.forEach(function(g){ var d = Math.abs(g.ms - t) * (g.who === p.uploader ? 1 : 1.5); if (d < bd){ bd = d; best = g; } });
@@ -1164,10 +1170,12 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
   // 그리기
   var CLs = [];
   function drawLive(){
-    gTrail.textContent = ''; gPh.textContent = ''; gPing.textContent = '';
+    gStr.textContent = ''; gTrail.textContent = ''; gPh.textContent = ''; gPing.textContent = '';
     MK = MK.filter(function(m){ return !G.live.contains(m); }); CLs = [];
     if (!live) return;
     updTools(); liveHint();
+    if (LV.strava && document.getElementById('lv-strava').checked) LV.strava.forEach(function(t){
+      el('path', {'class': 'strava', d: t.pts.map(function(q, i){ var z = px(q[0], q[1]); return (i ? 'L' : 'M') + z[0].toFixed(3) + ' ' + z[1].toFixed(3); }).join('')}, gStr); });
     var s = k(), by = {};
     if (document.getElementById('lv-ping').checked){
       LV.pings.forEach(function(p){ var w = p.who || ''; (by[w] = by[w] || []).push(p); });
@@ -1179,7 +1187,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
           if (lastOne){ el('circle', {r: 11, fill: col}, g); el('text', {'class': 'ini'}, g).textContent = w.slice(0, 1);
             var t = el('text', {'class': 'lab', x: 15, y: 1}, g); t.textContent = w + ' ' + kst(p.ms).hm; }
           else el('circle', {r: w ? 4 : 5, fill: col, 'class': w ? 'pt' : 'pt anon'}, g); }); }); }
-    if (LV.authed && document.getElementById('lv-photo').checked){
+    if (document.getElementById('lv-photo').checked){
       var cell = 44 * s, pts = [];
       LV.photos.forEach(function(p){ var L = photoLoc(p); if (L){ var q = px(L[0], L[1]); pts.push({p: p, x: q[0], y: q[1]}); } });
       pts.forEach(function(o){ for (var i = 0; i < CLs.length; i++){ var c = CLs[i]; if (Math.abs(c.x - o.x) < cell && Math.abs(c.y - o.y) < cell){ c.items.push(o.p); return; } } CLs.push({x: o.x, y: o.y, items: [o.p]}); });
@@ -1197,23 +1205,15 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     var recent = LV.pings.slice(-30).reverse();
     var open = lsGet('jeju-lvopen') === '1';
     var h = '<span class="lvhead"><span><b>라이브</b> · 기록 ' + LV.pings.length + '건 · 사진 ' + LV.photos.length + '장 · ' + kst(Date.now()).hm + ' 갱신</span>' +
-      (recent.length ? '<button type="button" class="lvfold" id="lv-fold" aria-expanded="' + open + '">' + (open ? '기록 접기 ▴' : '기록 펼치기 ▾') + '</button>' : '') + '</span>';
+      (LV.strava && LV.strava.length ? '' : '') + (recent.length ? '<button type="button" class="lvfold" id="lv-fold" aria-expanded="' + open + '">' + (open ? '기록 접기 ▴' : '기록 펼치기 ▾') + '</button>' : '') + '</span>';
     if (!recent.length) h += '<br>아직 기록이 없습니다. ◎를 누르고 "기록 남기기"를 고르면 여기에 쌓입니다.';
     else if (!open){ var lastBy = {}; LV.pings.forEach(function(p){ lastBy[p.who || ''] = p; });
       h += '<span class="lvlast">' + Object.keys(lastBy).map(function(w){ var p = lastBy[w], W = where(p.lat, p.lon);
         return '<button type="button" data-ping="' + p.id + '"><i style="background:' + colorOf(p.who) + '"></i>' + esc(w || '이름 없음') + ' ' + kst(p.ms).hm + ' · ' + f1(W.km) + 'km</button>'; }).join('') + '</span>'; }
     else h += '<ol class="lvlog">' + recent.map(function(p){ var W = where(p.lat, p.lon);
       return '<li data-ping="' + p.id + '"><i style="background:' + colorOf(p.who) + '"></i><b>' + kst(p.ms).hm + '</b> ' + esc(p.who || '이름 없음') + ' — 코스 ' + f1(W.km) + 'km' + (W.near ? ' · ' + esc(W.near) + ' 부근' : '') + ' <span>' + ago(p.ms) + '</span></li>'; }).join('') + '</ol>';
-    if (!LV.authed) h += '<details class="lvph"' + (LV.phOpen ? ' open' : '') + '><summary>사진도 보려면 그룹 비밀번호로 로그인</summary>' + '<span class="lvlogin"><input type="text" id="lv-nm" placeholder="이름" maxlength="12" value="' + esc(NAME) + '"><input type="password" id="lv-pw" placeholder="그룹 비밀번호"><button type="button" id="lv-go">들어가기</button></span><span class="err" id="lv-err"></span>' + '</details>';
     hint.innerHTML = h;
-    if (!LV.authed){ var dt = hint.querySelector('.lvph'); dt.ontoggle = function(){ LV.phOpen = dt.open; };
-      var go = document.getElementById('lv-go'), pw = document.getElementById('lv-pw');
-      pw.onkeydown = function(e){ if (e.key === 'Enter') go.click(); };
-      go.onclick = function(){ var nm = document.getElementById('lv-nm').value.trim(), er = document.getElementById('lv-err');
-        if (!nm || !pw.value){ er.textContent = '이름과 비밀번호를 넣어 주세요.'; return; } go.disabled = true;
-        SB.auth.signInWithPassword({email: GROUP_EMAIL, password: pw.value}).then(function(r){ if (r.error) throw r.error; NAME = nm; lsSet('jeju-photo-name', nm); loadLive(); })
-          .catch(function(e){ er.textContent = /invalid/i.test(e && e.message || '') ? '비밀번호가 맞지 않습니다.' : '들어가지 못했습니다.'; go.disabled = false; }); };
-    } }
+  }
   hint.addEventListener('click', function(e){ if (e.target.id === 'lv-fold'){ lsSet('jeju-lvopen', lsGet('jeju-lvopen') === '1' ? '0' : '1'); liveHint(); return; } var li = e.target.closest('[data-ping]'); if (li) showPing(+li.getAttribute('data-ping'), true); });
   function showPing(id, focus){ var p = LV.pings.filter(function(x){ return x.id === id; })[0]; if (!p) return;
     var q = px(p.lat, p.lon), W = where(p.lat, p.lon);
@@ -1233,7 +1233,7 @@ dialog.sup::backdrop{background:rgba(8,14,13,.55)}
     document.getElementById('lv-who').textContent = LV.authed ? (NAME || '이름 없음') + '으로 보는 중' : ''; }
   document.getElementById('lv-log').onclick = function(){ var on = lsGet('jeju-log') === 'yes'; lsSet('jeju-log', on ? 'no' : 'yes'); updTools(); if (!on) locBtn.click(); };
   document.getElementById('lv-ref').onclick = function(){ loadLive(); };
-  document.getElementById('lv-ping').onchange = document.getElementById('lv-photo').onchange = function(){ drawLive(); };
+  document.getElementById('lv-ping').onchange = document.getElementById('lv-photo').onchange = document.getElementById('lv-strava').onchange = function(){ drawLive(); };
 
   // 사진 크게 보기
   var lb = document.createElement('div'); lb.className = 'jlb'; lb.hidden = true;
